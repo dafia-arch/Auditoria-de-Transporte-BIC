@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Auditoria de transporte BIC">
+    <title>Auditoria de Transportes</title>
+    <link rel="stylesheet" href="Auditoria%20de%20Transporte.es-ES.customcss.css">
+</head>
+<body>
+    <main class="auditoria-container">
+        <div id="pantalla-carga" hidden><div class="loader" aria-hidden="true"></div><p>Guardando auditoria...</p></div>
+        <header class="encabezado">
+            <img src="Logo.png" alt="Logo BIC" class="logo" onerror="this.hidden=true">
+            <h1>Auditoria de Transportes</h1><p>Inspeccion de la unidad</p>
+        </header>
+        <section aria-labelledby="datos-unidad">
+            <h2 id="datos-unidad">Datos de la unidad</h2>
+            <div class="form-row">
+                <div class="form-group"><label for="inp_conductor">Conductor *</label><input type="text" id="inp_conductor" class="form-control" required></div>
+                <div class="form-group"><label for="inp_unidad">Unidad *</label><input type="text" id="inp_unidad" class="form-control" required></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group"><label for="inp_placas">Placas</label><input type="text" id="inp_placas" class="form-control"></div>
+                <div class="form-group"><label for="inp_ruta">Ruta *</label><select id="inp_ruta" class="form-control" required><option value="">Seleccione una ruta</option></select></div>
+            </div>
+        </section>
+        <section aria-labelledby="checklist">
+            <h2 id="checklist">Checklist de inspeccion</h2>
+            <div id="contenedor-progreso" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div id="barra-progreso"></div><div id="texto-progreso">0% completado</div></div>
+            <div id="contenedor-preguntas"></div>
+        </section>
+        <div id="mensaje" class="mensaje" role="status" aria-live="polite"></div>
+        <div id="panel-herramientas" class="acciones"><button type="button" id="btn-descargar-pdf" class="btn-accion btn-pdf">PDF</button><button type="button" id="btn-nueva-auditoria" class="btn-accion btn-limpiar">Limpiar</button><button type="button" id="btn-guardar-api" class="btn-accion btn-guardar">Guardar auditoria</button></div>
+    </main>
+    <script src="Auditoria%20de%20Transporte.es-ES.customjs.js" defer></script>
+</body>
+</html>
