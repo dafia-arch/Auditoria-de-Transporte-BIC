@@ -21,6 +21,26 @@
         const reader = new FileReader(); reader.onload = (event) => { const image = new Image(); image.onload = () => { const scale = Math.min(1, 900 / image.width, 900 / image.height), canvas = document.createElement("canvas"); canvas.width = Math.max(1, Math.round(image.width * scale)); canvas.height = Math.max(1, Math.round(image.height * scale)); canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height); salida.value = canvas.toDataURL("image/jpeg", 0.65); nombre.textContent = "Foto lista"; }; image.onerror = () => { salida.value = ""; nombre.textContent = "No se pudo leer la foto"; }; image.src = event.target.result; }; reader.readAsDataURL(file);
     }
     function construirPayload() { return { nombre: `Auditoria ${$("#inp_unidad").value.trim()} - ${$("#inp_ruta").value}`, fecha: new Date().toISOString(), conductor: $("#inp_conductor").value.trim(), unidad: $("#inp_unidad").value.trim(), placas: $("#inp_placas").value.trim(), ruta: $("#inp_ruta").value, puntos: $$(".tarjeta-punto").map((tarjeta) => ({ numeroPunto: Number(tarjeta.dataset.num), pregunta: $(".pregunta-titulo", tarjeta).textContent.replace(/^\d+\.\s*/, ""), estatus: $(".radio-estatus:checked", tarjeta)?.value || "Sin evaluar", observacion: $(".observacion", tarjeta).value.trim(), fotoBase64: $(".foto-base64", tarjeta).value || "" })) }; }
+    function generarPdf(payload) {
+        if (!window.jspdf || !window.jspdf.jsPDF) throw new Error("No se pudo cargar el generador PDF");
+        const pdf = new window.jspdf.jsPDF(), nombreArchivo = `${payload.nombre.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "")}.pdf`;
+        let y = 18;
+        const nuevaPaginaSiEsNecesario = (alto = 10) => { if (y + alto > 280) { pdf.addPage(); y = 18; } };
+        pdf.setFontSize(16); pdf.text("Auditoria de Transportes", 15, y); y += 10;
+        pdf.setFontSize(10); pdf.text(`Fecha: ${new Date(payload.fecha).toLocaleString("es-MX")}`, 15, y); y += 6;
+        pdf.text(`Conductor: ${payload.conductor}`, 15, y); y += 6;
+        pdf.text(`Unidad: ${payload.unidad}   Placas: ${payload.placas || "Sin placas"}`, 15, y); y += 6;
+        pdf.text(`Ruta: ${payload.ruta}`, 15, y); y += 10;
+        payload.puntos.forEach((punto) => {
+            const lineas = pdf.splitTextToSize(`${punto.numeroPunto}. ${punto.pregunta}`, 175);
+            nuevaPaginaSiEsNecesario(10 + lineas.length * 5); pdf.setFont(undefined, "bold"); pdf.text(lineas, 15, y); y += lineas.length * 5;
+            pdf.setFont(undefined, "normal"); pdf.text(`Estatus: ${punto.estatus}`, 20, y); y += 5;
+            if (punto.observacion) { const observacion = pdf.splitTextToSize(`Observacion: ${punto.observacion}`, 170); nuevaPaginaSiEsNecesario(observacion.length * 5); pdf.text(observacion, 20, y); y += observacion.length * 5; }
+            if (punto.fotoBase64) { nuevaPaginaSiEsNecesario(42); pdf.addImage(punto.fotoBase64, "JPEG", 20, y, 45, 35); y += 40; }
+            y += 4;
+        });
+        return { nombreArchivo, base64: pdf.output("datauristring").split(",")[1] };
+    }
     function mostrarMensaje(texto, error) { const mensaje = $("#mensaje"); mensaje.textContent = texto; mensaje.className = `mensaje ${error ? "mensaje-error" : "mensaje-ok"}`; }
     async function guardarAuditoria() {
         const boton = $("#btn-guardar-api"), url = String(config.powerAutomateUrl || "").trim();
@@ -28,8 +48,9 @@
         if (!$("#inp_conductor").value.trim() || !$("#inp_unidad").value.trim() || !$("#inp_ruta").value) { mostrarMensaje("Completa Conductor, Unidad y Ruta.", true); return; }
         const pendientes = preguntas.length - $$(".radio-estatus:checked").length; if (pendientes && !window.confirm(`Faltan ${pendientes} puntos. ¿Guardar de todas formas?`)) return;
         boton.disabled = true; $("#pantalla-carga").hidden = false;
-        try { const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(construirPayload()) }); if (!response.ok) throw new Error(`HTTP ${response.status}`); mostrarMensaje("Auditoria enviada correctamente a SharePoint.", false); } catch (error) { console.error(error); mostrarMensaje("No se pudo guardar. Revisa la URL y la configuracion de Power Automate.", true); } finally { $("#pantalla-carga").hidden = true; boton.disabled = false; }
+        try { const payload = construirPayload(), pdf = generarPdf(payload); payload.pdfNombre = pdf.nombreArchivo; payload.pdfBase64 = pdf.base64; const response = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) }); if (!response.ok) throw new Error(`HTTP ${response.status}`); mostrarMensaje("Auditoria y PDF enviados correctamente a SharePoint.", false); } catch (error) { console.error(error); mostrarMensaje("No se pudo guardar la auditoria o el PDF. Revisa la configuracion.", true); } finally { $("#pantalla-carga").hidden = true; boton.disabled = false; }
     }
+    function descargarPdf() { try { const payload = construirPayload(), pdf = generarPdf(payload), enlace = document.createElement("a"); enlace.href = `data:application/pdf;base64,${pdf.base64}`; enlace.download = pdf.nombreArchivo; enlace.click(); } catch (error) { console.error(error); mostrarMensaje("No se pudo generar el PDF.", true); } }
     document.addEventListener("change", (event) => { if (event.target.matches(".radio-estatus")) actualizarProgreso(); if (event.target.matches(".foto-input")) comprimirFoto(event.target); });
-    $("#btn-guardar-api").addEventListener("click", guardarAuditoria); $("#btn-descargar-pdf").addEventListener("click", () => window.print()); $("#btn-nueva-auditoria").addEventListener("click", () => { if (window.confirm("¿Limpiar todo?")) window.location.reload(); }); cargarRutas(); renderizarPreguntas();
+    $("#btn-guardar-api").addEventListener("click", guardarAuditoria); $("#btn-descargar-pdf").addEventListener("click", descargarPdf); $("#btn-nueva-auditoria").addEventListener("click", () => { if (window.confirm("¿Limpiar todo?")) window.location.reload(); }); cargarRutas(); renderizarPreguntas();
 })();
