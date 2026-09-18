@@ -2,7 +2,7 @@
     "use strict";
     const config = {
         // Pega aqui la URL del disparador HTTP de Power Automate.
-        powerAutomateUrl: ""
+        powerAutomateUrl: "https://defaultc7901014556049efa6893c215c6092.ee.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/20/workflows/3581f13b90a940abaf0394088c9622bb/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=-qInIc2B7FwTjC2loF2JRr-GdroQfIzt8LVFWoMKZZc"
     };
     const preguntas = ["Estado general de las llantas y refaccion", "Luces delanteras, traseras y de freno funcionales", "Luces direccionales e intermitentes operativas", "Espejos retrovisores completos y sin danos", "Parabrisas y ventanas enteras (sin estrelladuras)", "Limpiaparabrisas con plumas en buen estado", "Cinturon de seguridad del chofer funcional", "Asientos de pasajeros en buen estado y limpios", "Pasillos y escalones libres de obstaculos", "Extintor de incendios cargado y vigente", "Alarma sonora de reversa funcional", "Documentacion: Licencia de conducir vigente", "Documentacion: Tarjeta de circulacion y seguro vigentes", "Limpieza interior y exterior de la unidad", "Inspeccion visual de fugas (aceite, anticongelante)", "Tapon de tanque de combustible seguro", "Rotulacion y numero economico de la unidad visible", "Prueba general de frenos y freno de estacionamiento"];
     const rutas = ["Analco", "Bellavista", "Fundadores", "Hidalgo", "Los Pinos", "Manantiales", "Piedra Blanca", "Plan de Guadalupe", "Saltillo 2000", "Valle Poniente", "Zaragoza"];
